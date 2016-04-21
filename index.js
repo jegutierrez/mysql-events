@@ -1,12 +1,14 @@
-var ZongJi = require('zongji');
-var socketio = require('socket.io')
-var express = require('express')
-var http = require('http')
+'use strict'
 
-var port = 3000
-var app = express()
-var server = http.createServer(app)
-var io = socketio(server)
+const ZongJi = require('zongji');
+const socketio = require('socket.io')
+const express = require('express')
+const http = require('http')
+
+const port = 3000
+const app = express()
+const server = http.createServer(app)
+const io = socketio(server)
 
 server.listen(port, function(){
   console.log('Listen on port '+port)
@@ -14,14 +16,51 @@ server.listen(port, function(){
 
 io.on('connection', function(socket){
   console.log('Nueva conexion '+socket.id)
-  newMysqlEvents(socket)
+  let conn = {host:'localhost', user:'root', password: 'mysql'}
+
+  socket.on('join', function(data){
+    newMysqlEvents(conn, function (err, zongji) {
+
+      let schema = {}
+      schema[data.db] = [data.table]
+      let events = ['tablemap','writerows', 'updaterows', 'deleterows']
+    
+      zongji.start({
+        includeEvents: events,
+        includeSchema: schema
+      })
+
+      process.on('SIGINT', function() {
+        console.log('Got SIGINT.');
+        zongji.stop();
+        process.exit();
+      })
+
+      zongji.on('binlog', function(evt) {
+        _changes(evt, function (err, before, after) {
+          if (!err) {
+            console.log(JSON.stringify(before)+' -> '+JSON.stringify(after))
+            socket.emit('deli')
+          }
+        })
+        //evt.dump()
+      })
+
+      socket.on('disconnect', function () {
+        console.log('Got SIGINT.');
+        zongji.stop();
+      })
+
+    })
+  })
+
 })
 
-var _changes = function (evt, callback) {
-  before = []
-  after = []
+let _changes = function (evt, callback) {
+  let before = []
+  let after = []
   if (evt.rows !== undefined) {
-    for (var key in evt.rows[0].before) {
+    for (let key in evt.rows[0].before) {
       if (evt.rows[0].before[key] !== evt.rows[0].after[key]) {
         before.push(evt.rows[0].before[key])
         after.push(evt.rows[0].after[key])
@@ -29,36 +68,16 @@ var _changes = function (evt, callback) {
     }
     callback(null, before, after)
   }
-  callback('error', null)
+  callback('error')
 }
   
 
-var newMysqlEvents = function (socket) {
-  var zongji = new ZongJi({
-    host     : 'localhost',
-    user     : 'root',
-    password : '',
+let newMysqlEvents = function (conn, callback) {
+  let zongji = new ZongJi({
+    host     : conn.host,
+    user     : conn.user,
+    password : conn.password,
     // debug: true
   });
-
-  zongji.start({
-    includeEvents: ['tablemap','writerows', 'updaterows', 'deleterows'],
-    includeSchema: {'menuweb':['mewpae']}
-  });
-
-  process.on('SIGINT', function() {
-    console.log('Got SIGINT.');
-    zongji.stop();
-    process.exit();
-  });
-  zongji.on('binlog', function(evt) {
-    _changes(evt, function (err, before, after) {
-      if (!err) {
-        console.log(JSON.stringify(before)+' -> '+JSON.stringify(after))
-        socket.emit('deli')
-      }
-    })
-    //evt.dump()
-  });
-
+  callback(null, zongji)
 }
