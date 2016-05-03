@@ -10,50 +10,56 @@ const app = express()
 const server = http.createServer(app)
 const io = socketio(server)
 
+app.use(express.static('public'))
+
 server.listen(port, function(){
   console.log('Listen on port '+port)
 })
 
 io.on('connection', function(socket){
   console.log('Nueva conexion '+socket.id)
-  let conn = {host:'localhost', user:'root', password: 'mysql'}
+  let conn = {host:'192.168.12.61', user:'root', password: ''}
 
   socket.on('join', function(data){
-    newMysqlEvents(conn, function (err, zongji) {
-
-      let schema = {}
-      schema[data.db] = [data.table]
-      let events = ['tablemap','writerows', 'updaterows', 'deleterows']
     
-      zongji.start({
-        includeEvents: events,
-        includeSchema: schema
-      })
+    console.log('join -> '+ data.codcli + ':' + data.solucion)
 
-      process.on('SIGINT', function() {
-        console.log('Got SIGINT.');
-        zongji.stop();
-        process.exit();
-      })
+    let zongji = new ZongJi({
+      host     : conn.host,
+      user     : conn.user,
+      password : conn.password
+    });
 
-      zongji.on('binlog', function(evt) {
-        _changes(evt, function (err, before, after) {
-          if (!err) {
-            console.log(JSON.stringify(before)+' -> '+JSON.stringify(after))
-            socket.emit('deli')
-          }
-        })
-        //evt.dump()
-      })
+    let schema = {}
+    schema[data.codcli] = [data.solucion]
+    let events = ['tablemap','writerows', 'updaterows', 'deleterows']
+  
+    zongji.start({
+      includeEvents: events,
+      includeSchema: schema
+    })
 
-      socket.on('disconnect', function () {
-        console.log('Got SIGINT.');
-        zongji.stop();
+    zongji.on('binlog', function(evt) {
+      console.log(evt)
+      _changes(evt, function (err, before, after) {
+        if (!err) {
+          console.log(JSON.stringify(before)+' -> '+JSON.stringify(after))
+          socket.emit( evt.tableMap[evt.tableId].tableName )
+        }
       })
+    })
 
+    socket.on('disconnect', function () {
+      console.log('Got SIGINT.');
+      zongji.stop();
+    })
+
+    process.on('SIGINT', function() {
+      console.log('Got SIGINT.');
+      zongji.stop();
+      process.exit();
     })
   })
-
 })
 
 let _changes = function (evt, callback) {
@@ -69,15 +75,4 @@ let _changes = function (evt, callback) {
     callback(null, before, after)
   }
   callback('error')
-}
-  
-
-let newMysqlEvents = function (conn, callback) {
-  let zongji = new ZongJi({
-    host     : conn.host,
-    user     : conn.user,
-    password : conn.password,
-    // debug: true
-  });
-  callback(null, zongji)
 }
