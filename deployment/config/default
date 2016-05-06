@@ -6,7 +6,7 @@ upstream io_nodes {
 }
 
 server {
-  listen 8081;
+  listen 8008;
   server_name 192.168.12.32;
   location / {
     proxy_set_header Upgrade $http_upgrade;

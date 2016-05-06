@@ -5,7 +5,7 @@ const socketio = require('socket.io')
 const express = require('express')
 const http = require('http')
 
-const port = 3000
+const port = process.env.PORT || 3000
 const app = express()
 const server = http.createServer(app)
 const io = socketio(server)
@@ -18,7 +18,7 @@ server.listen(port, function(){
 
 io.on('connection', function(socket){
   console.log('Nueva conexion '+socket.id)
-  let conn = {host:'192.168.12.61', user:'root', password: ''}
+  let conn = {host:'192.168.12.32', user:'admin', password: 'format'}
 
   socket.on('join', function(data){
     

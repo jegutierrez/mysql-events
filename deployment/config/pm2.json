@@ -1,0 +1,40 @@
+{
+  "apps": [
+    {
+      "exec_mode": "fork_mode",
+      "script": "/opt/mysqle/package/index.js",
+      "name": "mysqle-1",
+      "node_args": [],
+      "env": {
+        "PORT": 3000,
+        "NODE_ENV": "production"
+      },
+      "error_file": "/opt/mysqle/logs/mysqle-1.err.log",
+      "out_file": "/opt/mysqle/logs/mysqle-1.out.log"
+    },
+    {
+      "exec_mode": "fork_mode",
+      "script": "/opt/mysqle/package/index.js",
+      "name": "mysqle-2",
+      "node_args": [],
+      "env": {
+        "PORT": 3001,
+        "NODE_ENV": "production"
+      },
+      "error_file": "/opt/mysqle/logs/mysqle-2.err.log",
+      "out_file": "/opt/mysqle/logs/mysqle-2.out.log"
+    },
+    {
+      "exec_mode": "fork_mode",
+      "script": "/opt/mysqle/package/index.js",
+      "name": "mysqle-3",
+      "node_args": [],
+      "env": {
+        "PORT": 3002,
+        "NODE_ENV": "production"
+      },
+      "error_file": "/opt/mysqle/logs/mysqle-3.err.log",
+      "out_file": "/opt/mysqle/logs/mysqle-3.out.log"
+    }
+  ]
+}

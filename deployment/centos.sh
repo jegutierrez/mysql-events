@@ -9,8 +9,12 @@ sudo yum install -y gcc gcc-c++ make openssl-devel git nginx libkrb5-dev
 sudo yum install -y redis
 
 ## Install Node.js 4.x from NodeSource Distributions
-curl -sL https://deb.nodesource.com/setup_4.x | sudo -E bash -
 sudo yum install -y nodejs
+curl https://raw.githubusercontent.com/creationix/nvm/v0.30.2/install.sh | bash
+
+## Close and reopen terminal
+nvm install 4.*.*
+nvm use 4.*
 
 ## Copy configuration to real destinations
 sudo cp /home/root/config/default /etc/nginx/sites-enabled/default
