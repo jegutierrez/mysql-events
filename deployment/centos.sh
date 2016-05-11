@@ -72,21 +72,22 @@ npm install pm2 -g
 # Crear el directorio mysqle y bajar la aplicacion
 sudo mkdir /opt/mysqle
 
+# Dar permisos al usuario que va a ejecutar 'git clone' y 'npm' al directorio /opt/mysqle
+sudo chown -R user /opt/mysqle
+
 # Entrar al directorio /opt/mysqle y Clonar el repositorio del proyecto
 cd /opt/mysqle
-git clone https://github.com/jegutierrez/mysql-events.git package
+git clone http://desarrollo.maxisistemas.com.ar:9900/jgutierrez/mysql-events.git package
 
-# Dar permisos al usuario que va a ejecutar npm al directorio /opt/mysqle
-sudo chown -R user /opt/mysqle
 
 # Entrar al proyecto e instalar dependencias
 cd package
 npm install
 
-# Crear el siguiente archivo
-/opt/mysqle/pm2.json
+# Con el repositorio viene el archivo de configuracion de pm2 para inicar las intancias de nodejs
+/opt/mysqle/package/deployment/config/pm2.json
 
-# Pegar el contenido y configurar las instancias de la aplicacion
+# Aqui se colocan las instancias que seran accedidas por nginx
 {
   "apps": [
 
@@ -129,15 +130,15 @@ npm install
   ]
 }
 
-## Copy configuration to real destinations
-sudo cp /root/config/default /etc/nginx/sites-enabled/default
-sudo cp /root/config/pm2.json /opt/mysqle/
+# Iniciar servicios de nodejs a traves de pm2
+pm2 start /opt/mysqle/package/deployment/config/pm2.json
 
-## Install MySQLe
-sudo rm -rf /opt/mysqle
-sudo mkdir -p /opt/mysqle
-sudo tar xvfz /home/root/mysqle-1.0.0.tgz -C /opt/mysqle
-cd /opt/mysqle/package && sudo npm install
+# Poner a inicar nodejs como servicio
+sudo pm2 startup systemd
 
 ## Run services
 service nginx restart
+
+# Para finalizar se debe habilitar el acceso al puerto 8008 en el firewall del servidor
+# para efectos de prueba se deshabilita el iptable firewall
+service iptables stop
