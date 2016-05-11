@@ -1,10 +1,29 @@
 #!/bin/bash
 
-## Install basic development tools and nginx
+## Instalar dependencias basicas para nginx y nodejs
 sudo yum -y update
+# Instalar wget
+sudo yum install -y wget
+
+# Actualizar g++ en centos 6
+sudo wget http://people.centos.org/tru/devtools-2/devtools-2.repo -O /etc/yum.repos.d/devtools-2.repo
+sudo yum install -y devtoolset-2-gcc devtoolset-2-binutils
+
 sudo yum -y groupinstall 'Development Tools'
 sudo yum install -y openssl-devel
 sudo yum install -y git
+
+## Instalacion de Nodejs 4.x
+
+# Ejecutar comandos como root
+sudo su
+curl --silent --location https://rpm.nodesource.com/setup_4.x | bash -
+yum -y install nodejs
+
+# Probamos que se haya instalado correctamente
+node -v
+# deberia devolver
+v4.4.4
 
 ## Instalacion de nginx en CentOS
 
@@ -21,17 +40,10 @@ enabled=1
 # Ejecutar la instalacion de Nginx
 sudo yum install -y nginx
 
-## Install Databases
+## Instalar redis
 sudo yum install -y redis
 
-#instalacion de Node Version Manager
-curl https://raw.githubusercontent.com/creationix/nvm/v0.30.2/install.sh | bash
-
-## Cerrar y abrir la terminal y ejecutar los siguientes comandos
-nvm install 4.4.3
-nvm use 4.4.3
-
-#configuracion nginx
+# Configuracion nginx
 sudo /usr/sbin/setsebool httpd_can_network_connect true
 
 ## Configuracion de proxy con nginx a las intacias de Node.js
@@ -67,7 +79,7 @@ server_name host-name o ip-adress;
 
 
 # Instalar pm2 para administrar instancias de Node.js
-npm install pm2 -g
+sudo npm install pm2 -g
 
 # Crear el directorio mysqle y bajar la aplicacion
 sudo mkdir /opt/mysqle
@@ -82,7 +94,10 @@ git clone http://desarrollo.maxisistemas.com.ar:9900/jgutierrez/mysql-events.git
 
 # Entrar al proyecto e instalar dependencias
 cd package
-npm install
+sudo npm install
+
+# Crear el directorio para los logs de nodejs /opt/mysqle/logs
+mkdir /opt/mysqle/logs
 
 # Con el repositorio viene el archivo de configuracion de pm2 para inicar las intancias de nodejs
 /opt/mysqle/package/deployment/config/pm2.json
@@ -134,11 +149,15 @@ npm install
 pm2 start /opt/mysqle/package/deployment/config/pm2.json
 
 # Poner a inicar nodejs como servicio
-sudo pm2 startup systemd
+pm2 startup centos
+
+# Guardar el servicio
+pm2 save
 
 ## Run services
-service nginx restart
+sudo service nginx restart
 
 # Para finalizar se debe habilitar el acceso al puerto 8008 en el firewall del servidor
 # para efectos de prueba se deshabilita el iptable firewall
-service iptables stop
+sudo service iptables save
+sudo service iptables stop
