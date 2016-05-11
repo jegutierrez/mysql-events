@@ -35,6 +35,7 @@ io.on('connection', function(socket){
     let events = ['tablemap','writerows', 'updaterows', 'deleterows']
   
     zongji.start({
+      serverId: 
       includeEvents: events,
       includeSchema: schema
     })
